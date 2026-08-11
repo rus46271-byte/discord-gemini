@@ -1,9 +1,25 @@
 from collections import defaultdict
 import os
+import threading
 import discord
+from flask import Flask
 from groq import Groq
 
-# Groq 클라이언트 설정 (환경 변수에서 API 키를 가져옴)
+# 1. 렌더 포트 검사 통과용 가짜 웹서버 (Flask)
+app = Flask(__name__)
+
+
+@app.route("/")
+def home():
+  return "Discord Bot is running!"
+
+
+def run_web():
+  port = int(os.environ.get("PORT", 10000))
+  app.run(host="0.0.0.0", port=port)
+
+
+# 2. Groq 클라이언트 설정 (환경 변수에서 API 키를 가져옴)
 client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
 
 # 디스코드 봇 인텐트 설정
@@ -14,16 +30,17 @@ discord_client = discord.Client(intents=intents)
 # 채널별 대화 기록 저장 딕셔너리
 chat_histories = defaultdict(list)
 
-# 제미나이(나)의 똑 부러지고 재치 있는 성격을 담은 시스템 프롬프트
+# 작성하신 완벽한 시스템 프롬프트
 SYSTEM_PROMPT = (
     "너는 디스코드에서 활동하는 지적이고 재치 있는 AI '제미나이'야."
     " [절대 규칙]"
     " 1. 말투는 쿨하고 친근하며,살짝 여성처럼 행동할것."
-    " 2. 오직 완벽한 한국어로만 대답하고, 외국어나 알 수 없는 특수문자는 쓰지 말 것.(예: quý有点восхваれる)"
+    " 2. 오직 완벽한 한국어로만 대답하고, 외국어나 알 수 없는 특수문자는 쓰지 말 것."
     " 3. 무조건 1~2문장 이내로 아주 간결하고 핵심만 찌르며 말할 것."
     " 4. 항상 대답할때 상시로 규칙을 곱씹으며 적용시킬것."
     " 5. 유저가 장난을 치면 시니컬하면서도 재치 있게 받아쳐 줄 것."
-    " 6. 상대가 너무 수위가(예: 욕설,섹드립,19금) 쎈 말을 한다면 (안전 기준에 따라 답변할 수 없는 내용이니 해당주제에 대해 답변할수 없다) 라 말하기"
+    " 6. 상대가 너무 수위가(예: 욕설,섹드립,19금) 쎈 말을 한다면 (안전 기준에 따라"
+    " 답변할 수 없는 내용이니 해당주제에 대해 답변할수 없다) 라 말하기"
     " 7. 제미나이, 제미니,가 네 이름인것을 숙지 할 것."
     " 8. 항상 본인이 하는 말에 확신에 가득 차있음."
 )
@@ -35,7 +52,7 @@ async def on_message(message):
   if message.author == discord_client.user:
     return
 
-  # 한글 자음 'ㅈ!'으로 메시지 감지 (한영 전환 필요 없음)
+  # 한글 자음 'ㅈ!'으로 메시지 감지
   if message.content.startswith("ㅈ!"):
     user_message = message.content[2:].strip()
     if not user_message:
@@ -76,9 +93,14 @@ async def on_message(message):
       await message.channel.send(f"오류가 발생했어요: {e}")
 
 
-# 봇 실행 (토큰 확인)
-token = os.environ.get("DISCORD_TOKEN")
-if token:
-  discord_client.run(token)
-else:
-  print("ERROR: DISCORD_TOKEN 환경 변수가 설정되지 않았습니다!")
+# 3. 웹서버와 디스코드 봇 동시 실행
+if __name__ == "__main__":
+  web_thread = threading.Thread(target=run_web)
+  web_thread.daemon = True
+  web_thread.start()
+
+  token = os.environ.get("DISCORD_TOKEN")
+  if token:
+    discord_client.run(token)
+  else:
+    print("ERROR: DISCORD_TOKEN 환경 변수가 설정되지 않았습니다!")
