@@ -17,8 +17,8 @@ async def on_message(message):
   if message.author == discord_client.user:
     return
 
-  # 골뱅이(@)로 시작하기만 하면 뒤에 띄어쓰기 없이도 작동
-  if message.content.startswith("@"):
+  # 마침표(.)로 시작하기만 하면 뒤에 띄어쓰기 없이도 작동
+  if message.content.startswith("."):
     user_message = message.content[1:].strip()
 
     try:
