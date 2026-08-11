@@ -17,19 +17,14 @@ async def on_message(message):
   if message.author == discord_client.user:
     return
 
-  # 느낌표(!)로 시작하기만 하면 띄어쓰기 없이도 작동
-  if message.content.startswith("!"):
+  # 골뱅이(@)로 시작하기만 하면 뒤에 띄어쓰기 없이도 작동
+  if message.content.startswith("@"):
     user_message = message.content[1:].strip()
 
     try:
-      # 제미나이 모델 호출 및 소녀 페르소나 설정
-      prompt = (
-          "너는 디스코드에 사는 제미나이 ai 야"
-          + user_message
-      )
-
+      # 페르소나 없이 순수한 제미나이 모델 호출
       response = client.models.generate_content(
-          model="gemini-2.5-flash", contents=prompt
+          model="gemini-2.5-flash", contents=user_message
       )
 
       await message.channel.send(response.text)
