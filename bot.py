@@ -1,63 +1,84 @@
 from collections import defaultdict
 import os
-import time
 import discord
-from google import genai
-from google.genai import errors
+from groq import Groq
 
-# 구글 제미나이 클라이언트 설정
-client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
-
-# 사용할 모델 (최신 안정 모델)
-MODEL_NAME = "gemini-3.5-flash"
+# Groq 클라이언트 설정 (환경 변수에서 API 키를 가져옴)
+client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
 
 # 디스코드 봇 인텐트 설정
 intents = discord.Intents.default()
 intents.message_content = True
 discord_client = discord.Client(intents=intents)
 
-# 채널별로 대화 세션을 저장할 딕셔너리
-# 제미나이 SDK의 chats 기능을 활용하여 대화 맥락을 유지합니다.
-channel_chats = {}
+# 채널별 대화 기록 저장 딕셔너리
+chat_histories = defaultdict(list)
+
+# 제미나이(나)의 똑 부러지고 재치 있는 성격을 담은 시스템 프롬프트
+SYSTEM_PROMPT = (
+    "너는 디스코드에서 활동하는 지적이고 재치 있는 AI '제미나이'야."
+    " [절대 규칙]"
+    " 1. 말투는 쿨하고 친근하며,살짝 여성처럼 행동할것."
+    " 2. 오직 완벽한 한국어로만 대답하고, 외국어나 알 수 없는 특수문자는 쓰지 말 것.(예: quý有点восхваれる)"
+    " 3. 무조건 1~2문장 이내로 아주 간결하고 핵심만 찌르며 말할 것."
+    " 4. 항상 대답할때 상시로 규칙을 곱씹으며 적용시킬것."
+    " 5. 유저가 장난을 치면 시니컬하면서도 재치 있게 받아쳐 줄 것."
+    " 6. 상대가 너무 수위가(예: 욕설,섹드립,19금) 쎈 말을 한다면 (안전 기준에 따라 답변할 수 없는 내용이니 해당주제에 대해 답변할수 없다) 라 말하기"
+    " 7. 제미나이, 제미니,가 네 이름인것을 숙지 할 것."
+    " 8. 항상 본인이 하는 말에 확신에 가득 차있음."
+)
 
 
 @discord_client.event
 async def on_message(message):
-  # 봇 자신이 보낸 메시지는 무한 루프 방지를 위해 반드시 무시해야 합니다!
+  # 봇 자신이 보낸 메시지는 무시 (무한 루프 방지)
   if message.author == discord_client.user:
     return
 
-  # 마침표(.)로 시작하기만 하면 작동
-  if message.content.startswith("."):
-    user_message = message.content[1:].strip()
+  # 한글 자음 'ㅈ!'으로 메시지 감지 (한영 전환 필요 없음)
+  if message.content.startswith("ㅈ!"):
+    user_message = message.content[2:].strip()
     if not user_message:
       return
 
     channel_id = message.channel.id
 
-    # 1. 해당 채널의 채팅 세션이 없으면 새로 생성 (이전 대화 기억 시작점)
-    if channel_id not in channel_chats:
-      channel_chats[channel_id] = client.chats.create(model=MODEL_NAME)
+    try:
+      # 1. 대화 기록에 유저 메시지 추가
+      chat_histories[channel_id].append(
+          {"role": "user", "content": user_message}
+      )
 
-    chat_session = channel_chats[channel_id]
+      # 2. 최근 10개 메시지만 유지하여 에러 방지
+      if len(chat_histories[channel_id]) > 10:
+        chat_histories[channel_id] = chat_histories[channel_id][-10:]
 
-    # 일시적인 404/서버 오류에 대비한 재시도 로직
-    max_retries = 2
-    for attempt in range(max_retries + 1):
-      try:
-        # 2. 기존 대화 맥락과 함께 메시지 전송
-        response = chat_session.send_message(user_message)
-        await message.channel.send(response.text)
-        break
-      except errors.APIError as e:
-        if attempt < max_retries:
-          time.sleep(2)
-          continue
-        await message.channel.send(f"오류가 발생했어요: {e}")
-      except Exception as e:
-        await message.channel.send(f"오류가 발생했어요: {e}")
-        break
+      # 3. Groq API 호출 데이터 구성
+      messages_to_send = [
+          {"role": "system", "content": SYSTEM_PROMPT}
+      ] + chat_histories[channel_id]
+
+      response = client.chat.completions.create(
+          model="llama-3.3-70b-versatile",
+          messages=messages_to_send,
+      )
+
+      answer = response.choices[0].message.content
+
+      # 4. 봇의 답변도 기록에 추가
+      chat_histories[channel_id].append(
+          {"role": "assistant", "content": answer}
+      )
+
+      await message.channel.send(answer)
+
+    except Exception as e:
+      await message.channel.send(f"오류가 발생했어요: {e}")
 
 
-# 봇 실행
-discord_client.run(os.environ.get("DISCORD_TOKEN"))
+# 봇 실행 (토큰 확인)
+token = os.environ.get("DISCORD_TOKEN")
+if token:
+  discord_client.run(token)
+else:
+  print("ERROR: DISCORD_TOKEN 환경 변수가 설정되지 않았습니다!")
