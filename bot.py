@@ -1,5 +1,6 @@
 from collections import defaultdict
 import os
+import re
 import threading
 import discord
 from flask import Flask
@@ -81,6 +82,15 @@ async def on_message(message):
       )
 
       answer = response.choices[0].message.content
+
+      # [추가] 깨진 외계어나 이상한 특수문자가 섞여 나오는 것 강제 필터링
+      answer = re.sub(
+          r"[^\uAC00-\uD7A3\u3131-\u314E\u314F-\u3163a-zA-Z0-9\s.,?!~^-_~()시대]",
+          "",
+          answer,
+      )
+      if not answer.strip():
+        answer = "응? 뭐라고 했어?"
 
       # 4. 봇의 답변도 기록에 추가
       chat_histories[channel_id].append(
