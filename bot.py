@@ -26,7 +26,6 @@ client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
 # 디스코드 봇 인텐트 설정 (멤버 권한 추가)
 intents = discord.Intents.default()
 intents.message_content = True
-intents.members = True
 discord_client = discord.Client(intents=intents)
 
 # 채널별 대화 기록 저장 딕셔너리
