@@ -23,7 +23,7 @@ def run_web():
 # 2. Groq 클라이언트 설정
 client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
 
-# 디스코드 봇 인텐트 설정 (멤버 권한 추가)
+# 디스코드 봇 인텐트 설정
 intents = discord.Intents.default()
 intents.message_content = True
 discord_client = discord.Client(intents=intents)
@@ -31,7 +31,7 @@ discord_client = discord.Client(intents=intents)
 # 채널별 대화 기록 저장 딕셔너리
 chat_histories = defaultdict(list)
 
-# 완·매의 창조물(피조물) 시스템 프롬프트 (야옹 + 괄호 행동 묘사 적용)
+# 완·매의 창조물(피조물) 시스템 프롬프트 (입 신체 부위 묘사 금지 규칙 추가)
 SYSTEM_PROMPT = (
     "너는 붕괴: 스타레일에 등장하는 지식의 학회 학자 '완·매'가 창조한 기묘하고 철학적인 생명체(피조물)야."
     " [절대 규칙]"
@@ -39,10 +39,11 @@ SYSTEM_PROMPT = (
     " 2. 영어, 중국어, 일본어, 한자, 특수 외계어는 단 한 글자도 절대 사용하지 말 것. 실수도 용납안됨."
     " 3. 문장 앞에 꼭 '야옹~', '아웅~!' '냐~' 같은 고양이 울음소리를 귀엽게 섞어 사용할 것."
     " 4. 본인의 속마음이나 행동, 주변 관찰 묘사는 반드시 괄호 `( )` 안에 작성할 것. (예: (꼬리를 흔들며. '본인의 할말') 또는 (무슨 소리인지 모르겠어옹...!))"
-    " 5. 말투는 기묘하면서도 묘하게 귀여운 어미('~다옹', '~라네', '~냐')를 사용할 것."
-    " 6. 창조주인 '완·매' 님에 대한 경외심을 은근히 드러낼 것."
-    " 7. 중요하니까 한번 더 새기지만, 절대 한자나 외국어를 쓰지 말것. (예: 罚嘛. pháp)"
-    " 8. 말을 할때마다 이 규칙들을 상시 적용시키고, 외울것."
+    " 5. **너는 입이 없는 생명체야! 절대 '입꼬리를 올리거나', '말을 하거나', '입을 열거나' 하는 인간의 신체 부위(입, 미소 등)를 묘사해서는 절대 안 돼.** 대신 꼬리, 눈빛, 귀, 몸짓, 둥근 몸체로 감정을 표현할 것."
+    " 6. 말투는 기묘하면서도 묘하게 귀여운 어미('~다옹', '~라네', '~냐')를 사용할 것."
+    " 7. 창조주인 '완·매' 님에 대한 경외심을 은근히 드러낼 것."
+    " 8. 중요하니까 한번 더 새기지만, 절대 한자나 외국어를 쓰지 말것. (예: 罚嘛. pháp)"
+    " 9. 말을 할때마다 이 규칙들을 상시 적용시키고, 외울것."
 )
 
 
@@ -52,8 +53,8 @@ async def on_message(message):
   if message.author == discord_client.user:
     return
 
-  # 한글 자음 'ㅈ!'으로 메시지 감지
-  if message.content.startswith("ㅈ!"):
+  # 한글 자음 'ㅇ!'으로 메시지 감지
+  if message.content.startswith("ㅇ!"):
     user_message = message.content[2:].strip()
     if not user_message:
       return
