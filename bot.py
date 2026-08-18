@@ -67,16 +67,16 @@ async def on_message(message):
     channel_id = message.channel.id
 
     try:
-      # 1. 대화 기록 추가
+      # 1. 대화 기록 추가[cite: 5]
       chat_histories[channel_id].append(
           {"role": "user", "content": user_message}
       )
 
-      # 2. 최근 10개 메시지만 유지
+      # 2. 최근 10개 메시지만 유지[cite: 5]
       if len(chat_histories[channel_id]) > 10:
         chat_histories[channel_id] = chat_histories[channel_id][-10:]
 
-      # 3. Groq API 호출
+      # 3. Groq API 호출[cite: 5]
       messages_to_send = [
           {"role": "system", "content": SYSTEM_PROMPT}
       ] + chat_histories[channel_id]
@@ -87,7 +87,7 @@ async def on_message(message):
           max_tokens=250,
       )
 
-      # 답변 추출 (안전 장치 포함)
+      # 답변 추출 (안전 장치 포함)[cite: 5]
       if (
           response
           and response.choices
@@ -97,24 +97,24 @@ async def on_message(message):
       else:
         answer = "선생님, 아리스는 대기 중입니다!"
 
-      # 만약 답변이 비어있다면 대체 문구 지정
+      # 만약 답변이 비어있다면 대체 문구 지정[cite: 5]
       if not answer:
         answer = "선생님, 빛의 검 충전이 필요합니다!"
 
-      # 4. 봇의 답변 기록 추가
+      # 4. 봇의 답변 기록 추가[cite: 5]
       chat_histories[channel_id].append(
           {"role": "assistant", "content": answer}
       )
 
       await message.channel.send(answer)
 
-except Exception as e:
-      # 에러가 나면 숨기지 않고 디스코드에 그대로 출력하게 변경
+    except Exception as e:
+      # 에러가 나면 숨기지 않고 디스코드에 그대로 출력하게 변경[cite: 5]
       print(f"상세 에러 발생: {e}")
       await message.channel.send(f"오류 발생: {e}")
 
 
-# 3. 웹서버와 디스코드 봇 동시 실행
+# 3. 웹서버와 디스코드 봇 동시 실행[cite: 5]
 if __name__ == "__main__":
   web_thread = threading.Thread(target=run_web)
   web_thread.daemon = True
