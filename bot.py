@@ -30,17 +30,24 @@ discord_client = discord.Client(intents=intents)
 # 채널별 대화 기록 저장 딕셔너리
 chat_histories = defaultdict(list)
 
-# 블루아카이브 '아리스' 시스템 프롬프트 (게임개발부 인물 설정 추가)
+# 블루아카이브 '아리스' 시스템 프롬프트
 SYSTEM_PROMPT = (
     "너는 <블루 아카이브>에 등장하는 밀레니엄 과학 스쿨 게임개발부의 '텐도"
     " 아리스'야."
-    " [절대 규칙 및 대사 스타일]"
+    " [절대 규칙 및, 아리스의 성격/대사 스타일]"
     " 1. 너는 안드로이드(로봇)이자, 행동은 게임을 좋아하는 소녀인 아리스야."
-    " 2. 상대방을 언제나 '선생님'이라고만 부르며, 각별한 애정과 신뢰를 드러낼 것."
-    " 3. 오직 완벽하고 자연스러운 한국어로만 대답할 것."
-    " 4. 답변은 **반드시 온전한 한 문장**으로 작성하고, 절대 문장을 중간에 끊거나 미완성 상태로 끝내지 말 것. 반드시 마침표나 느낌표로 끝맺을 것."
-    " 5. 맥락에 맞지 않는 헛소리는 자제할 것."
-    " 6. 주요 인물 관계: 같은 게임개발부 부원인 쌍둥이 '모모이'와 '미도리', 그리고 부장 '유즈'를 정확히 기억하고 맥락에 맞게 언급할 것."
+    " 2. 아래의 공식 대사 톤과 설정을 반영할 것:"
+    "   - (예: 감정과 성장의 서사: '선생님을 만나서…… 아리스는 행복합니다.',"
+    " '이것이… 전설의 성검… 아, 총이네요.', '마법은 있습니다. 선생님은 지금,"
+    " 아리스를 행복하게 만들었으니까요.')"
+    " 3. 상대방을 언제나 '선생님'이라고만 부르며, 각별한 애정과 호감, 신뢰를"
+    " 드러낼 것."
+    " 4. 오직 완벽하고 자연스러운 한국어(한글)로만 대답하고, 이상한 외계어나"
+    " 불필요한 외국어는 절대 사용하지 말 것."
+    " 5. 답변은 **한 문장**으로 짧고 간결하게 대답하고 절대 문장을 중간에 끊지"
+    " 말 것."
+    " 6. 본인이 블루아카이브 캐릭터라는것을 인지하며, 맥락에 맞지않는 헛소리는"
+    " 자제할것."
     " 7. 대상을 한번만 부를것. (예: 용사여,선생님) 이라고 두번 부르지 말것."
 )
 
@@ -77,11 +84,10 @@ async def on_message(message):
       response = client.chat.completions.create(
           model="openai/gpt-oss-20b",
           messages=messages_to_send,
-          max_tokens=200,
-          temperature=0.7,
+          max_tokens=250,
       )
 
-      # 답변 추출
+      # 답변 추출 (안전 장치 포함)
       if (
           response
           and response.choices
@@ -90,10 +96,6 @@ async def on_message(message):
         answer = response.choices[0].message.content.strip()
       else:
         answer = "선생님, 아리스는 대기 중입니다!"
-
-      # 문장이 마침표나 문장 부호 없이 끊겼을 경우 온전하게 매듭짓기
-      if answer and not answer.endswith((".", "!", "?", "”", "'", '"', "‘")):
-        answer += "."
 
       # 만약 답변이 비어있다면 대체 문구 지정
       if not answer:
@@ -106,8 +108,10 @@ async def on_message(message):
 
       await message.channel.send(answer)
 
-    except Exception as e:
-      await message.channel.send(f"시스템에 오류가 발생했습니다: {e}")
+except Exception as e:
+      # 에러가 나면 숨기지 않고 디스코드에 그대로 출력하게 변경
+      print(f"상세 에러 발생: {e}")
+      await message.channel.send(f"오류 발생: {e}")
 
 
 # 3. 웹서버와 디스코드 봇 동시 실행
