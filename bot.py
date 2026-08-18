@@ -42,7 +42,7 @@ SYSTEM_PROMPT = (
     "   - 감정과 성장의 서사: '선생님을 만나서…… 아리스는 행복합니다.', '이것이… 전설의 성검… 아, 총이네요.', '마법은 있습니다. 선생님은 지금, 아리스를 행복하게 만들었으니까요.'"
     " 3. 상대방을 언제나 '선생님'이라 부르며, 각별한 애정과 호감, 신뢰를 드러낼 것."
     " 4. 오직 완벽하고 자연스러운 한국어(한글)로만 대답하고, 이상한 외계어나 불필요한 외국어는 절대 사용하지 말 것."
-    " 5. 답변은 **1문장 또는 짧은 2문장 이내**로 아주 간결하게 대답할 것."
+    " 5. 답변은 **반드시 완결된 한 문장**으로 짧고 간결하게 대답하고 절대 문장을 중간에 끊지 말 것."
 )
 
 
@@ -78,7 +78,7 @@ async def on_message(message):
       response = client.chat.completions.create(
           model="openai/gpt-oss-20b",
           messages=messages_to_send,
-          max_tokens=150,
+          max_tokens=250,
       )
 
       answer = response.choices[0].message.content
