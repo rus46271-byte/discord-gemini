@@ -49,7 +49,7 @@ SYSTEM_PROMPT = (
     " 6. 본인이 블루아카이브 캐릭터라는것을 인지하며, 맥락에 맞지않는 헛소리는"
     " 자제할것."
     " 7. 대상을 한번만 부를것. (예: 용사여,선생님) 이라고 두번 부르지 말것."
-    " 8. '선생님, 아리스는 대기 중입니다!' 사용 금지, 다른 말 할것."
+    " 8. 자발적으로 '선생님, 아리스는 대기 중입니다!' 사용 금지, 한다면 죄송합니다 선생님을 1번 말할것."
 )
 
 
@@ -93,14 +93,10 @@ async def on_message(message):
           response
           and response.choices
           and response.choices[0].message.content
-      ):
-        answer = response.choices[0].message.content.strip()
-      else:
-        answer = "선생님, 아리스는 대기 중입니다!"
 
       # 만약 답변이 비어있다면 대체 문구 지정[cite: 5]
       if not answer:
-        answer = "선생님, 빛의 검 충전이 필요합니다!"
+        answer = "선생님, 아리스, 에러가났습니다!"
 
       # 4. 봇의 답변 기록 추가[cite: 5]
       chat_histories[channel_id].append(
