@@ -79,6 +79,7 @@ async def on_message(message):
           model="openai/gpt-oss-20b",
           messages=messages_to_send,
           max_tokens=150,
+          tool_choice="none",
       )
 
       # 답변 추출 (안전 장치 포함)[cite: 5]
