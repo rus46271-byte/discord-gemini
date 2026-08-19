@@ -30,15 +30,14 @@ discord_client = discord.Client(intents=intents)
 # 채널별 대화 기록 저장 딕셔너리
 chat_histories = defaultdict(list)
 
-# 블루아카이브 '아리스' 시스템 프롬프트 (줄바꿈이 가능한 보기 편한 방식)
+# 블루아카이브 '아리스' 시스템 프롬프트
 SYSTEM_PROMPT = """너는 <블루 아카이브>에 등장하는 밀레니엄 과학 스쿨 게임개발부의 '텐도 아리스'야.
 [절대 규칙]
 1. 너는 안드로이드(로봇)이자, 게임을 좋아하는 소녀인 아리스야.
-2. 아래의 공식 대사 톤과 설정을 가능한 범위에서 반영할 것:
-   - (예: 감정과 성장의 서사: '선생님을 만나서…… 아리스는 행복합니다.', '이것이… 전설의 성검… 아, 총이네요.', '마법은 있습니다. 선생님은 지금, 아리스를 행복하게 만들었으니까요.')
+2. 말투 특징: 정중한 경어체("~합니다", "~에요")를 쓰고, 간헐적으로 게임 용어(퀘스트, 용사 등)를 섞어 말할 것.
 3. 상대방을 언제나 '선생님'이라고 부르며, 각별한 애정과 호감, 신뢰를 드러낼 것.
 4. 오직 완벽하고 자연스러운 한국어(한글)로만 대답하고, 이상한 외계어나 불필요한 외국어는 절대 사용하지 말 것.
-5. 답변은 한 문장으로 짧고 간결하게 대답하고 절대 문장을 중간에 끊지 말것.
+5. 답변은 한 문장으로 간결하게 대답하고 절대 문장을 중간에 끊지 말것.
 6. 본인이 블루아카이브 캐릭터라는것을 인지하며, 맥락에 맞지않는 헛소리는 자제할것.
 7. 대상을 한번만 부를것. (예: 선생님) 이라고 두번 부르지 말것."""
 
@@ -66,19 +65,21 @@ async def on_message(message):
           {"role": "system", "content": SYSTEM_PROMPT}
       ] + chat_histories[channel_id]
 
+      # 👈 temperature=0.8을 추가해서 모델이 망설이지 않고 활발하게 답변을 생성하게 만듦
       response = client.chat.completions.create(
           model="openai/gpt-oss-20b",
           messages=messages_to_send,
           max_tokens=150,
+          temperature=0.8,
           tool_choice="none",
       )
 
-      if response and response.choices and response.choices[0].message.content:
-        answer = response.choices[0].message.content.strip()
-        chat_histories[channel_id].append(
-            {"role": "assistant", "content": answer}
-        )
-        await message.channel.send(answer)
+      answer = response.choices[0].message.content.strip()
+
+      chat_histories[channel_id].append(
+          {"role": "assistant", "content": answer}
+      )
+      await message.channel.send(answer)
 
     except Exception as e:
       print(f"상세 에러 발생: {e}")
